@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Portfolio Manager</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="logo"><span class="logo-mark">▲</span> PortfolioOS</div>
+      <nav class="tabs">
+        <button class="tab active" data-tab="holdings">Holdings</button>
+        <button class="tab" data-tab="expenses">Expenses</button>
+      </nav>
+    </header>
+
+    <!-- HOLDINGS TAB -->
+    <section id="tab-holdings" class="tab-content active">
+      <div class="metrics" id="h-metrics">
+        <div class="metric"><div class="metric-label">Total Value</div><div class="metric-value" id="m-value">₹0</div></div>
+        <div class="metric"><div class="metric-label">Total Invested</div><div class="metric-value" id="m-invested">₹0</div></div>
+        <div class="metric"><div class="metric-label">Gain / Loss</div><div class="metric-value" id="m-gain">₹0</div><div class="metric-sub" id="m-pct">0%</div></div>
+        <div class="metric"><div class="metric-label">Holdings</div><div class="metric-value" id="m-count">0</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Add Holding</div>
+        <div class="form-grid">
+          <div class="field"><label>Ticker</label><input id="h-ticker" placeholder="RELIANCE" /></div>
+          <div class="field"><label>Company</label><input id="h-name" placeholder="Reliance Industries" /></div>
+          <div class="field"><label>Qty</label><input id="h-qty" type="number" placeholder="10" /></div>
+          <div class="field"><label>Avg Buy Price (₹)</label><input id="h-cost" type="number" placeholder="2500" /></div>
+          <div class="field"><label>Current Price (₹)</label><input id="h-price" type="number" placeholder="2800" /></div>
+          <div class="field align-end"><button class="btn btn-primary" onclick="addHolding()">+ Add</button></div>
+        </div>
+        <div class="err" id="h-err"></div>
+      </div>
+
+      <div class="table-card">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Ticker</th><th>Company</th><th class="r">Qty</th>
+              <th class="r">Buy Price</th><th class="r">Cur. Price</th>
+              <th class="r">Value</th><th class="r">P&amp;L</th><th class="r">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="holdings-body">
+            <tr><td colspan="8" class="empty">No holdings yet — add one above.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="alloc-section" class="card" style="display:none">
+        <div class="card-title">Allocation</div>
+        <div class="legend" id="alloc-legend"></div>
+        <div class="chart-wrap">
+          <canvas id="pieChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- EXPENSES TAB -->
+    <section id="tab-expenses" class="tab-content">
+      <div class="metrics" id="exp-metrics-wrap"></div>
+
+      <div class="card">
+        <div class="card-title">Add Monthly Expense</div>
+        <div class="form-grid">
+          <div class="field">
+            <label>Month</label>
+            <select id="e-month">
+              <option>Jan</option><option>Feb</option><option>Mar</option><option>Apr</option>
+              <option>May</option><option>Jun</option><option>Jul</option><option>Aug</option>
+              <option>Sep</option><option>Oct</option><option>Nov</option><option>Dec</option>
+            </select>
+          </div>
+          <div class="field"><label>Year</label><input id="e-year" type="number" value="2025" /></div>
+          <div class="field">
+            <label>Category</label>
+            <select id="e-cat">
+              <option>Rent</option><option>Food</option><option>Transport</option>
+              <option>Utilities</option><option>Entertainment</option><option>Healthcare</option>
+              <option>SIP/Investment</option><option>Other</option>
+            </select>
+          </div>
+          <div class="field"><label>Description</label><input id="e-desc" placeholder="e.g. Electricity bill" /></div>
+          <div class="field"><label>Amount (₹)</label><input id="e-amt" type="number" placeholder="5000" /></div>
+          <div class="field align-end"><button class="btn btn-primary" onclick="addExpense()">+ Add</button></div>
+        </div>
+        <div class="err" id="e-err"></div>
+      </div>
+
+      <!-- Month filter -->
+      <div class="filter-bar">
+        <div class="field inline">
+          <label>Filter by Month</label>
+          <select id="f-month">
+            <option value="">All months</option>
+            <option>Jan</option><option>Feb</option><option>Mar</option><option>Apr</option>
+            <option>May</option><option>Jun</option><option>Jul</option><option>Aug</option>
+            <option>Sep</option><option>Oct</option><option>Nov</option><option>Dec</option>
+          </select>
+        </div>
+        <div class="field inline">
+          <label>Year</label>
+          <select id="f-year"><option value="">All years</option></select>
+        </div>
+        <button class="btn btn-ghost" onclick="clearFilter()">Clear</button>
+      </div>
+
+      <div class="table-card">
+        <table class="tbl">
+          <thead>
+            <tr><th>Month</th><th>Category</th><th>Description</th><th class="r">Amount</th><th class="r">Del</th></tr>
+          </thead>
+          <tbody id="exp-body">
+            <tr><td colspan="5" class="empty">No expenses yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="exp-chart-section" class="card" style="display:none">
+        <div class="card-title">Spending by Category</div>
+        <div class="legend" id="exp-legend"></div>
+        <div class="chart-wrap chart-bar">
+          <canvas id="expChart"></canvas>
+        </div>
+      </div>
+
+      <div id="monthly-chart-section" class="card" style="display:none">
+        <div class="card-title">Monthly Totals</div>
+        <div class="chart-wrap chart-bar">
+          <canvas id="monthChart"></canvas>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
