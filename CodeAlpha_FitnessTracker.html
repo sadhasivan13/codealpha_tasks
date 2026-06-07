@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fitness Tracker App — CodeAlpha</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #f5f5f0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 2rem 1rem;
+    }
+    .app {
+      width: 100%;
+      max-width: 640px;
+      background: #fff;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    }
+    h1 { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 700; color: #111; }
+    .date-label { font-size: 13px; color: #999; margin-bottom: 1.5rem; margin-top: 2px; }
+    .tabs { display: flex; gap: 6px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .tab { font-size: 13px; font-weight: 500; padding: 7px 18px; border-radius: 20px; border: 1px solid #e0e0e0; background: transparent; color: #666; cursor: pointer; transition: all 0.15s; }
+    .tab.active { background: #16a34a; border-color: #16a34a; color: #fff; }
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+    .stat-card { background: #f8fdf8; border: 1px solid #e0f0e0; border-radius: 12px; padding: 14px; text-align: center; }
+    .stat-icon { font-size: 22px; margin-bottom: 4px; }
+    .stat-val { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 700; color: #111; }
+    .stat-lbl { font-size: 11px; color: #888; margin-top: 2px; }
+    /* Progress */
+    .progress-wrap { margin-bottom: 1rem; }
+    .prog-label { display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-bottom: 5px; }
+    .prog-bar { height: 9px; background: #f0f0f0; border-radius: 5px; overflow: hidden; }
+    .prog-fill { height: 100%; border-radius: 5px; transition: width 0.6s ease; }
+    .section-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: #111; margin-bottom: 10px; margin-top: 1rem; }
+    /* Log list */
+    .log-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 1rem; max-height: 220px; overflow-y: auto; }
+    .log-item { display: flex; align-items: center; justify-content: space-between; background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 11px 14px; }
+    .log-info { display: flex; flex-direction: column; gap: 2px; }
+    .log-name { font-size: 14px; font-weight: 500; color: #222; }
+    .log-meta { font-size: 11px; color: #aaa; }
+    .log-cal { font-size: 14px; font-weight: 500; color: #16a34a; }
+    .del-btn { border: none; background: none; padding: 5px; cursor: pointer; color: #ccc; font-size: 17px; border-radius: 6px; display: flex; align-items: center; transition: all 0.15s; }
+    .del-btn:hover { color: #dc2626; background: #fef2f2; }
+    /* Form */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+    input, select {
+      font-family: 'DM Sans', sans-serif; font-size: 13px;
+      border: 1px solid #e0e0e0; border-radius: 8px;
+      background: #fff; color: #333; padding: 9px 12px; width: 100%; outline: none;
+    }
+    input:focus, select:focus { border-color: #16a34a; }
+    .add-btn {
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+      background: #16a34a; border: none; border-radius: 8px;
+      color: #fff; padding: 10px 22px; cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .add-btn:hover { background: #15803d; }
+    .add-btn:active { transform: scale(0.97); }
+    /* Weekly chart */
+    .chart-wrap { display: flex; align-items: flex-end; gap: 8px; height: 110px; margin-bottom: 0.5rem; padding: 0 2px; }
+    .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .bar { width: 100%; border-radius: 4px 4px 0 0; transition: height 0.5s ease; min-height: 2px; }
+    .bar-lbl { font-size: 10px; color: #aaa; }
+    .bar-val { font-size: 10px; color: #666; font-weight: 500; min-height: 13px; }
+    .empty-log { font-size: 13px; color: #ccc; text-align: center; padding: 1.5rem 0; }
+    .weekly-note { font-size: 12px; color: #999; text-align: center; margin-bottom: 1rem; }
+    .divider { height: 1px; background: #f0f0f0; margin: 1rem 0; }
+    footer { text-align: center; font-size: 12px; color: #ccc; margin-top: 2rem; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <h1>🏋️ Fitness Tracker</h1>
+  <div class="date-label" id="dateLabel"></div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('dashboard')">Dashboard</button>
+    <button class="tab" onclick="switchTab('log')">Log Workout</button>
+    <button class="tab" onclick="switchTab('weekly')">Weekly</button>
+  </div>
+
+  <!-- Dashboard Tab -->
+  <div id="dashboard-tab">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">👟</div>
+        <div class="stat-val" id="stepsVal">0</div>
+        <div class="stat-lbl">Steps</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔥</div>
+        <div class="stat-val" id="calsVal">0</div>
+        <div class="stat-lbl">Calories</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⏱️</div>
+        <div class="stat-val" id="minsVal">0</div>
+        <div class="stat-lbl">Minutes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💪</div>
+        <div class="stat-val" id="workoutsVal">0</div>
+        <div class="stat-lbl">Workouts</div>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="prog-label">
+        <span>Steps goal</span>
+        <span id="stepsGoalLbl">0 / 10,000</span>
+      </div>
+      <div class="prog-bar">
+        <div class="prog-fill" id="stepsProg" style="width:0%;background:#16a34a"></div>
+      </div>
+    </div>
+    <div class="progress-wrap">
+      <div class="prog-label">
+        <span>Calorie goal</span>
+        <span id="calsGoalLbl">0 / 500 kcal</span>
+      </div>
+      <div class="prog-bar">
+        <div class="prog-fill" id="calsProg" style="width:0%;background:#2563eb"></div>
+      </div>
+    </div>
+    <div class="progress-wrap">
+      <div class="prog-label">
+        <span>Active minutes goal</span>
+        <span id="minsGoalLbl">0 / 60 min</span>
+      </div>
+      <div class="prog-bar">
+        <div class="prog-fill" id="minsProg" style="width:0%;background:#f59e0b"></div>
+      </div>
+    </div>
+
+    <div class="section-title">Today's Activities</div>
+    <div class="log-list" id="todayList">
+      <div class="empty-log">No activities logged today. Go to Log Workout!</div>
+    </div>
+  </div>
+
+  <!-- Log Workout Tab -->
+  <div id="log-tab" style="display:none">
+    <div class="section-title" style="margin-top:0">Log an Activity</div>
+    <div class="form-grid">
+      <select id="exType">
+        <option>Running</option>
+        <option>Walking</option>
+        <option>Cycling</option>
+        <option>Swimming</option>
+        <option>Yoga</option>
+        <option>Weight Training</option>
+        <option>HIIT</option>
+        <option>Jump Rope</option>
+        <option>Other</option>
+      </select>
+      <input id="exMins" type="number" placeholder="Duration (mins)" min="1" max="300" />
+    </div>
+    <div class="form-grid">
+      <input id="exCals" type="number" placeholder="Calories burned" min="0" />
+      <input id="exSteps" type="number" placeholder="Steps (optional)" min="0" />
+    </div>
+    <button class="add-btn" onclick="addActivity()">
+      <i class="ti ti-plus"></i> Add Activity
+    </button>
+
+    <div class="divider"></div>
+    <div class="section-title" style="margin-top:0">All Logged Activities</div>
+    <div class="log-list" id="allList">
+      <div class="empty-log">No activities yet.</div>
+    </div>
+  </div>
+
+  <!-- Weekly Tab -->
+  <div id="weekly-tab" style="display:none">
+    <div class="section-title" style="margin-top:0">Calories Burned — Last 7 Days</div>
+    <div class="chart-wrap" id="weekChartCals"></div>
+    <div class="weekly-note" id="weeklyCalNote"></div>
+
+    <div class="section-title">Steps — Last 7 Days</div>
+    <div class="chart-wrap" id="weekChartSteps"></div>
+    <div class="weekly-note" id="weeklyStepNote"></div>
+
+    <div class="section-title">Active Minutes — Last 7 Days</div>
+    <div class="chart-wrap" id="weekChartMins"></div>
+  </div>
+
+  <footer>CodeAlpha Internship Project &mdash; Fitness Tracker App</footer>
+</div>
+
+<script>
+// Load from localStorage
+let logs = [];
+try { logs = JSON.parse(localStorage.getItem('ca_ft_logs') || '[]'); } catch(e) {}
+
+function save() {
+  try { localStorage.setItem('ca_ft_logs', JSON.stringify(logs)); } catch(e) {}
+}
+
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const today = new Date();
+function dateKey(d) { return d.toISOString().split('T')[0]; }
+const todayKey = dateKey(today);
+
+document.getElementById('dateLabel').textContent =
+  today.toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+function todayLogs() { return logs.filter(l => l.date === todayKey); }
+
+function updateDashboard() {
+  const tl = todayLogs();
+  const steps   = tl.reduce((s, l) => s + (l.steps || 0), 0);
+  const cals    = tl.reduce((s, l) => s + (l.cals  || 0), 0);
+  const mins    = tl.reduce((s, l) => s + (l.mins  || 0), 0);
+
+  document.getElementById('stepsVal').textContent    = steps.toLocaleString();
+  document.getElementById('calsVal').textContent     = cals;
+  document.getElementById('minsVal').textContent     = mins;
+  document.getElementById('workoutsVal').textContent = tl.length;
+
+  document.getElementById('stepsGoalLbl').textContent = steps.toLocaleString() + ' / 10,000';
+  document.getElementById('calsGoalLbl').textContent  = cals + ' / 500 kcal';
+  document.getElementById('minsGoalLbl').textContent  = mins + ' / 60 min';
+
+  document.getElementById('stepsProg').style.width = Math.min(100, steps / 100) + '%';
+  document.getElementById('calsProg').style.width  = Math.min(100, cals  / 5)   + '%';
+  document.getElementById('minsProg').style.width  = Math.min(100, mins  / 0.6) + '%';
+
+  const list = document.getElementById('todayList');
+  list.innerHTML = tl.length
+    ? tl.map((l) => `
+        <div class="log-item">
+          <div class="log-info">
+            <div class="log-name">${l.type}</div>
+            <div class="log-meta">${l.mins} min${l.steps ? ' &middot; ' + l.steps.toLocaleString() + ' steps' : ''}</div>
+          </div>
+          <div class="log-cal">${l.cals} kcal</div>
+        </div>`).join('')
+    : '<div class="empty-log">No activities logged today. Go to Log Workout!</div>';
+}
+
+function renderAllList() {
+  const list = document.getElementById('allList');
+  if (!logs.length) {
+    list.innerHTML = '<div class="empty-log">No activities yet. Log your first workout!</div>';
+    return;
+  }
+  list.innerHTML = [...logs].reverse().map((l, ri) => {
+    const i = logs.length - 1 - ri;
+    return `
+      <div class="log-item">
+        <div class="log-info">
+          <div class="log-name">${l.type}</div>
+          <div class="log-meta">${l.date} &middot; ${l.mins} min${l.steps ? ' &middot; ' + l.steps.toLocaleString() + ' steps' : ''}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="log-cal">${l.cals} kcal</div>
+          <button class="del-btn" onclick="deleteLog(${i})" title="Delete"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function addActivity() {
+  const type  = document.getElementById('exType').value;
+  const mins  = parseInt(document.getElementById('exMins').value) || 0;
+  const cals  = parseInt(document.getElementById('exCals').value) || 0;
+  const steps = parseInt(document.getElementById('exSteps').value) || 0;
+  if (!mins || !cals) { alert('Please enter duration and calories.'); return; }
+  logs.push({ type, mins, cals, steps: steps || null, date: todayKey });
+  save();
+  document.getElementById('exMins').value  = '';
+  document.getElementById('exCals').value  = '';
+  document.getElementById('exSteps').value = '';
+  updateDashboard();
+  renderAllList();
+}
+
+function deleteLog(i) {
+  if (!confirm('Delete this activity?')) return;
+  logs.splice(i, 1);
+  save();
+  updateDashboard();
+  renderAllList();
+}
+
+function renderWeekly() {
+  const last7 = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    last7.push(d);
+  }
+
+  const calsData  = last7.map(d => logs.filter(l => l.date === dateKey(d)).reduce((s,l) => s + (l.cals||0), 0));
+  const stepsData = last7.map(d => logs.filter(l => l.date === dateKey(d)).reduce((s,l) => s + (l.steps||0), 0));
+  const minsData  = last7.map(d => logs.filter(l => l.date === dateKey(d)).reduce((s,l) => s + (l.mins||0), 0));
+
+  const maxC = Math.max(...calsData, 1);
+  const maxS = Math.max(...stepsData, 1);
+  const maxM = Math.max(...minsData, 1);
+
+  const totalCals  = calsData.reduce((a,b) => a+b, 0);
+  const totalSteps = stepsData.reduce((a,b) => a+b, 0);
+
+  document.getElementById('weeklyCalNote').textContent  = 'Total this week: ' + totalCals + ' kcal burned';
+  document.getElementById('weeklyStepNote').textContent = 'Total this week: ' + totalSteps.toLocaleString() + ' steps';
+
+  function buildChart(containerId, data, max, color) {
+    document.getElementById(containerId).innerHTML = data.map((v, i) => `
+      <div class="bar-col">
+        <div class="bar-val">${v || ''}</div>
+        <div class="bar" style="height:${Math.round(v / max * 85)}px;background:${color}"></div>
+        <div class="bar-lbl">${DAYS[last7[i].getDay()]}</div>
+      </div>`).join('');
+  }
+
+  buildChart('weekChartCals',  calsData,  maxC, '#16a34a');
+  buildChart('weekChartSteps', stepsData, maxS, '#2563eb');
+  buildChart('weekChartMins',  minsData,  maxM, '#f59e0b');
+}
+
+function switchTab(tab) {
+  ['dashboard','log','weekly'].forEach(t => {
+    document.getElementById(t + '-tab').style.display = t === tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach((t, i) =>
+    t.classList.toggle('active', ['dashboard','log','weekly'][i] === tab));
+  if (tab === 'weekly') renderWeekly();
+  if (tab === 'log')    renderAllList();
+}
+
+updateDashboard();
+</script>
+</body>
+</html>

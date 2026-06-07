@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Random Quote Generator — CodeAlpha</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;1,400&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #f5f5f0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+    .app {
+      width: 100%;
+      max-width: 620px;
+      background: #fff;
+      border-radius: 16px;
+      padding: 2.5rem 2rem;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    }
+    h1 { font-family: 'DM Sans', sans-serif; font-size: 22px; font-weight: 700; color: #111; margin-bottom: 4px; text-align: center; }
+    .tagline { font-size: 13px; color: #999; text-align: center; margin-bottom: 2rem; }
+    .category-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 2rem; }
+    .cat-btn {
+      font-size: 12px; font-weight: 500; padding: 5px 16px;
+      border-radius: 20px; border: 1px solid #e0e0e0;
+      background: transparent; color: #666; cursor: pointer; transition: all 0.15s;
+    }
+    .cat-btn:hover { background: #f5f5f5; }
+    .cat-btn.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+    .quote-card {
+      background: #fafafa;
+      border: 1px solid #eeeeee;
+      border-radius: 14px;
+      padding: 2.5rem 2rem;
+      margin-bottom: 1.5rem;
+      min-height: 210px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: opacity 0.3s ease;
+    }
+    .quote-card.fading { opacity: 0; }
+    .quote-mark {
+      font-size: 64px;
+      line-height: 0.5;
+      color: #ddd;
+      font-family: 'Playfair Display', serif;
+      margin-bottom: 1rem;
+      display: block;
+    }
+    .quote-text {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 20px;
+      line-height: 1.65;
+      color: #222;
+      margin-bottom: 1.5rem;
+    }
+    .quote-meta { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    .quote-author { font-size: 14px; font-weight: 500; color: #444; }
+    .quote-cat {
+      font-size: 11px; font-weight: 500; letter-spacing: 0.06em;
+      text-transform: uppercase; background: #eff6ff; color: #2563eb;
+      border-radius: 20px; padding: 3px 12px;
+    }
+    .action-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    button {
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+      border: 1px solid #e0e0e0; border-radius: 8px;
+      background: #fff; color: #333; padding: 10px 22px;
+      cursor: pointer; transition: background 0.15s, transform 0.1s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    button:hover { background: #f5f5f5; }
+    button:active { transform: scale(0.97); }
+    button.primary { background: #2563eb; border-color: #2563eb; color: #fff; }
+    button.primary:hover { background: #1d4ed8; }
+    .count-label { font-size: 12px; color: #bbb; text-align: center; margin-top: 1rem; }
+    .copy-toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #111; color: #fff; font-size: 13px; padding: 8px 20px;
+      border-radius: 20px; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+    }
+    .copy-toast.show { opacity: 1; }
+    footer { text-align: center; font-size: 12px; color: #ccc; margin-top: 2rem; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <h1>💬 Random Quote Generator</h1>
+  <div class="tagline">Daily inspiration at the click of a button</div>
+
+  <div class="category-row" id="catRow"></div>
+
+  <div class="quote-card" id="quoteCard">
+    <div>
+      <span class="quote-mark">"</span>
+      <div class="quote-text" id="quoteText">Loading...</div>
+    </div>
+    <div class="quote-meta">
+      <div class="quote-author" id="quoteAuthor"></div>
+      <div class="quote-cat" id="quoteCat"></div>
+    </div>
+  </div>
+
+  <div class="action-row">
+    <button class="primary" onclick="newQuote()"><i class="ti ti-refresh"></i> New Quote</button>
+    <button onclick="copyQuote()"><i class="ti ti-copy"></i> Copy</button>
+    <button onclick="shareQuote()"><i class="ti ti-share"></i> Share</button>
+  </div>
+  <div class="count-label" id="countLabel"></div>
+  <footer>CodeAlpha Internship Project &mdash; Random Quote Generator</footer>
+</div>
+
+<div class="copy-toast" id="toast">Copied to clipboard!</div>
+
+<script>
+const quotes = [
+  {text:"The only way to do great work is to love what you do.", author:"Steve Jobs", cat:"Motivation"},
+  {text:"In the middle of difficulty lies opportunity.", author:"Albert Einstein", cat:"Motivation"},
+  {text:"It does not matter how slowly you go as long as you do not stop.", author:"Confucius", cat:"Motivation"},
+  {text:"Believe you can and you're halfway there.", author:"Theodore Roosevelt", cat:"Motivation"},
+  {text:"The best time to plant a tree was 20 years ago. The second best time is now.", author:"Chinese Proverb", cat:"Motivation"},
+  {text:"Life is what happens when you're busy making other plans.", author:"John Lennon", cat:"Life"},
+  {text:"The purpose of life is not to be happy. It is to be useful.", author:"Ralph Waldo Emerson", cat:"Life"},
+  {text:"In three words I can sum up everything I've learned about life: it goes on.", author:"Robert Frost", cat:"Life"},
+  {text:"An unexamined life is not worth living.", author:"Socrates", cat:"Life"},
+  {text:"To live is the rarest thing in the world. Most people just exist.", author:"Oscar Wilde", cat:"Life"},
+  {text:"Two things are infinite: the universe and human stupidity; and I'm not sure about the universe.", author:"Albert Einstein", cat:"Humor"},
+  {text:"I'm writing a book. I've got the page numbers done.", author:"Steven Wright", cat:"Humor"},
+  {text:"The elevator to success is out of order. You'll have to use the stairs.", author:"Joe Girard", cat:"Humor"},
+  {text:"Behind every great man is a woman rolling her eyes.", author:"Jim Carrey", cat:"Humor"},
+  {text:"Spread love everywhere you go. Let no one ever come to you without leaving happier.", author:"Mother Teresa", cat:"Wisdom"},
+  {text:"When you reach the end of your rope, tie a knot in it and hang on.", author:"Franklin D. Roosevelt", cat:"Wisdom"},
+  {text:"Don't judge each day by the harvest you reap but by the seeds that you plant.", author:"Robert Louis Stevenson", cat:"Wisdom"},
+  {text:"To be yourself in a world that is constantly trying to make you something else is the greatest accomplishment.", author:"Ralph Waldo Emerson", cat:"Wisdom"},
+  {text:"Darkness cannot drive out darkness; only light can do that.", author:"Martin Luther King Jr.", cat:"Wisdom"},
+  {text:"No act of kindness, no matter how small, is ever wasted.", author:"Aesop", cat:"Wisdom"},
+];
+
+const cats = ["All", ...[...new Set(quotes.map(q => q.cat))]];
+let activeCat = "All", shownIdx = -1;
+
+function renderCats() {
+  document.getElementById('catRow').innerHTML = cats.map(c =>
+    `<button class="cat-btn${c === activeCat ? ' active' : ''}" onclick="setCat('${c}')">${c}</button>`
+  ).join('');
+}
+
+function setCat(c) { activeCat = c; shownIdx = -1; renderCats(); newQuote(); }
+function getPool() { return activeCat === "All" ? quotes : quotes.filter(q => q.cat === activeCat); }
+
+function newQuote() {
+  const pool = getPool();
+  if (!pool.length) return;
+  let ni = shownIdx;
+  while (ni === shownIdx && pool.length > 1) ni = Math.floor(Math.random() * pool.length);
+  shownIdx = ni;
+  const card = document.getElementById('quoteCard');
+  card.classList.add('fading');
+  setTimeout(() => {
+    document.getElementById('quoteText').textContent = pool[ni].text;
+    document.getElementById('quoteAuthor').textContent = '— ' + pool[ni].author;
+    document.getElementById('quoteCat').textContent = pool[ni].cat;
+    document.getElementById('countLabel').textContent =
+      (shownIdx + 1) + ' of ' + pool.length + ' quotes' + (activeCat !== 'All' ? ' in ' + activeCat : '');
+    card.classList.remove('fading');
+  }, 280);
+}
+
+function copyQuote() {
+  const pool = getPool();
+  if (shownIdx < 0 || !pool.length) return;
+  const q = pool[shownIdx];
+  navigator.clipboard.writeText(`"${q.text}" — ${q.author}`).then(() => showToast()).catch(() => {});
+}
+
+function shareQuote() {
+  const pool = getPool();
+  if (shownIdx < 0 || !pool.length) return;
+  const q = pool[shownIdx];
+  const text = `"${q.text}" — ${q.author}`;
+  if (navigator.share) { navigator.share({ text }); }
+  else { copyQuote(); }
+}
+
+function showToast() {
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+renderCats();
+newQuote();
+</script>
+</body>
+</html>

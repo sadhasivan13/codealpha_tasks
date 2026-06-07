@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flashcard Quiz App — CodeAlpha</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #f5f5f0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 2rem 1rem;
+    }
+    .app {
+      width: 100%;
+      max-width: 600px;
+      background: #fff;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    }
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 4px;
+    }
+    .subtitle { font-size: 13px; color: #888; margin-bottom: 1.5rem; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 8px; }
+    .counter { font-size: 13px; color: #666; background: #f5f5f5; border: 1px solid #e5e5e5; border-radius: 20px; padding: 4px 14px; }
+    .tabs { display: flex; gap: 6px; margin-bottom: 1.5rem; }
+    .tab { font-size: 13px; font-weight: 500; padding: 7px 18px; border-radius: 20px; border: 1px solid #e0e0e0; background: transparent; color: #666; cursor: pointer; transition: all 0.15s; }
+    .tab.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+    /* Card flip */
+    .card-wrap { perspective: 1000px; width: 100%; height: 230px; margin-bottom: 1.5rem; cursor: pointer; }
+    .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.5s; transform-style: preserve-3d; }
+    .card-inner.flipped { transform: rotateY(180deg); }
+    .card-face {
+      position: absolute; width: 100%; height: 100%;
+      backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      background: #fff; border: 1px solid #e5e5e5; border-radius: 14px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 2rem; gap: 12px;
+    }
+    .card-back { transform: rotateY(180deg); background: #f8f9ff; }
+    .card-label { font-size: 11px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: #aaa; }
+    .card-text { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 600; color: #111; text-align: center; line-height: 1.4; }
+    .show-hint { font-size: 12px; color: #bbb; }
+    .btn-row { display: flex; gap: 8px; justify-content: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    button {
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+      border: 1px solid #e0e0e0; border-radius: 8px;
+      background: #fff; color: #333; padding: 9px 20px;
+      cursor: pointer; transition: background 0.15s, transform 0.1s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    button:hover { background: #f5f5f5; }
+    button:active { transform: scale(0.97); }
+    button.primary { background: #2563eb; border-color: #2563eb; color: #fff; }
+    button.primary:hover { background: #1d4ed8; }
+    button.danger { background: #fef2f2; border-color: #fecaca; color: #dc2626; }
+    .section-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: #111; margin-bottom: 10px; }
+    .card-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 1rem; max-height: 200px; overflow-y: auto; }
+    .card-item {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 10px 14px;
+    }
+    .card-item-q { font-size: 13px; color: #333; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 8px; }
+    .card-item-actions { display: flex; gap: 4px; }
+    .icon-btn { border: none; background: none; padding: 5px; cursor: pointer; color: #999; font-size: 17px; border-radius: 6px; display: flex; align-items: center; }
+    .icon-btn:hover { background: #f5f5f5; }
+    .icon-btn.del:hover { color: #dc2626; background: #fef2f2; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+    input, textarea {
+      font-family: 'DM Sans', sans-serif; font-size: 13px;
+      border: 1px solid #e0e0e0; border-radius: 8px;
+      background: #fff; color: #333; padding: 9px 12px; width: 100%; outline: none;
+    }
+    input:focus, textarea:focus { border-color: #2563eb; }
+    .empty { text-align: center; color: #bbb; font-size: 13px; padding: 2rem 0; }
+    .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 10px; border-radius: 20px; background: #eff6ff; color: #2563eb; }
+    footer { text-align: center; font-size: 12px; color: #ccc; margin-top: 2rem; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="top-bar">
+    <div>
+      <h1>🃏 Flashcard Quiz</h1>
+      <div class="subtitle">Click the card to reveal the answer</div>
+    </div>
+    <div class="counter" id="counter">Card 1 of 5</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('study')">Study</button>
+    <button class="tab" onclick="switchTab('manage')">Manage Cards</button>
+  </div>
+
+  <!-- Study Tab -->
+  <div id="study-tab">
+    <div class="card-wrap" onclick="flipCard()">
+      <div class="card-inner" id="cardInner">
+        <div class="card-face">
+          <div class="card-label">Question</div>
+          <div class="card-text" id="questionText">What is the capital of France?</div>
+          <div class="show-hint">Tap to flip ↕</div>
+        </div>
+        <div class="card-face card-back">
+          <div class="card-label">Answer</div>
+          <div class="card-text" id="answerText">Paris</div>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button onclick="prevCard()"><i class="ti ti-arrow-left"></i> Prev</button>
+      <button onclick="shuffleCards()"><i class="ti ti-arrows-shuffle"></i> Shuffle</button>
+      <button onclick="nextCard()">Next <i class="ti ti-arrow-right"></i></button>
+    </div>
+  </div>
+
+  <!-- Manage Tab -->
+  <div id="manage-tab" style="display:none">
+    <div class="section-title">All Flashcards</div>
+    <div class="card-list" id="cardList"></div>
+    <div class="section-title">Add / Edit Card</div>
+    <div class="form-row">
+      <input id="qInput" placeholder="Question" />
+      <input id="aInput" placeholder="Answer" />
+    </div>
+    <div class="btn-row" style="justify-content:flex-start">
+      <button class="primary" onclick="saveCard()"><i class="ti ti-plus"></i> <span id="saveBtnLabel">Add Card</span></button>
+      <button id="cancelBtn" style="display:none" onclick="cancelEdit()">Cancel</button>
+    </div>
+  </div>
+
+  <footer>CodeAlpha Internship Project &mdash; Flashcard Quiz App</footer>
+</div>
+
+<script>
+let cards = [
+  {q:"What is the capital of France?", a:"Paris"},
+  {q:"What is 12 × 12?", a:"144"},
+  {q:"Who wrote Romeo and Juliet?", a:"William Shakespeare"},
+  {q:"What is the chemical symbol for water?", a:"H₂O"},
+  {q:"How many continents are on Earth?", a:"7"}
+];
+let idx = 0, flipped = false, editIdx = -1;
+
+function updateCard() {
+  if (!cards.length) {
+    document.getElementById('questionText').textContent = 'No cards! Add some in Manage Cards.';
+    document.getElementById('answerText').textContent = '—';
+    document.getElementById('counter').textContent = '0 cards';
+    return;
+  }
+  const ci = document.getElementById('cardInner');
+  ci.classList.remove('flipped');
+  flipped = false;
+  setTimeout(() => {
+    document.getElementById('questionText').textContent = cards[idx].q;
+    document.getElementById('answerText').textContent = cards[idx].a;
+    document.getElementById('counter').textContent = 'Card ' + (idx+1) + ' of ' + cards.length;
+  }, 150);
+}
+
+function flipCard() {
+  flipped = !flipped;
+  document.getElementById('cardInner').classList.toggle('flipped', flipped);
+}
+
+function nextCard() { idx = (idx + 1) % cards.length; updateCard(); }
+function prevCard() { idx = (idx - 1 + cards.length) % cards.length; updateCard(); }
+
+function shuffleCards() {
+  for (let i = cards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [cards[i], cards[j]] = [cards[j], cards[i]];
+  }
+  idx = 0; updateCard();
+}
+
+function switchTab(tab) {
+  document.getElementById('study-tab').style.display = tab === 'study' ? 'block' : 'none';
+  document.getElementById('manage-tab').style.display = tab === 'manage' ? 'block' : 'none';
+  document.querySelectorAll('.tab').forEach((t, i) =>
+    t.classList.toggle('active', (tab==='study' && i===0) || (tab==='manage' && i===1)));
+  if (tab === 'manage') renderList();
+}
+
+function renderList() {
+  const list = document.getElementById('cardList');
+  if (!cards.length) { list.innerHTML = '<div class="empty">No flashcards yet. Add one below!</div>'; return; }
+  list.innerHTML = cards.map((c, i) => `
+    <div class="card-item">
+      <div class="card-item-q" title="${c.q}">${c.q}</div>
+      <div class="card-item-actions">
+        <button class="icon-btn" onclick="editCard(${i})" title="Edit"><i class="ti ti-edit"></i></button>
+        <button class="icon-btn del" onclick="deleteCard(${i})" title="Delete"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`).join('');
+}
+
+function saveCard() {
+  const q = document.getElementById('qInput').value.trim();
+  const a = document.getElementById('aInput').value.trim();
+  if (!q || !a) { alert('Please fill in both question and answer.'); return; }
+  if (editIdx >= 0) { cards[editIdx] = {q, a}; editIdx = -1; }
+  else cards.push({q, a});
+  document.getElementById('qInput').value = '';
+  document.getElementById('aInput').value = '';
+  document.getElementById('saveBtnLabel').textContent = 'Add Card';
+  document.getElementById('cancelBtn').style.display = 'none';
+  if (idx >= cards.length) idx = cards.length - 1;
+  renderList();
+}
+
+function editCard(i) {
+  editIdx = i;
+  document.getElementById('qInput').value = cards[i].q;
+  document.getElementById('aInput').value = cards[i].a;
+  document.getElementById('saveBtnLabel').textContent = 'Update Card';
+  document.getElementById('cancelBtn').style.display = '';
+  document.getElementById('qInput').focus();
+}
+
+function deleteCard(i) {
+  if (!confirm('Delete this flashcard?')) return;
+  cards.splice(i, 1);
+  if (idx >= cards.length) idx = Math.max(0, cards.length - 1);
+  renderList();
+}
+
+function cancelEdit() {
+  editIdx = -1;
+  document.getElementById('qInput').value = '';
+  document.getElementById('aInput').value = '';
+  document.getElementById('saveBtnLabel').textContent = 'Add Card';
+  document.getElementById('cancelBtn').style.display = 'none';
+}
+
+updateCard();
+</script>
+</body>
+</html>
